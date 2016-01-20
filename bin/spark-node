@@ -5,17 +5,70 @@
 process.title = "spark-node";
 
 var repl = require("repl");
+var vm = require('vm');
+var babel = require('babel-core');
+var crypto = require("crypto");
 
 var spark_node = require("../");
 var context = spark_node(process.argv.slice(2));
 
-global.sqlContext= context.sqlContext;
-global.sqlFunctions = context.sqlFunctions;
+var vmContext = vm.createContext(context);
+
+function uniqueId() {
+    return crypto.randomBytes(20).toString('hex');
+}
+
+function defaultEval(code, context, file, cb) {
+    var err, result;
+    // first, create the Script object to check the syntax
+    try {
+        var script = vm.createScript(code, {
+            filename: file,
+            displayErrors: false
+        });
+    } catch (e) {
+        err = e;
+        console.error('parse error %j', code, e);
+    }
+
+    if (!err) {
+        try {
+            result = script.runInContext(vmContext, { displayErrors: false });
+        } catch (e) {
+            err = e;
+            if (err && process.domain) {
+                console.error('not recoverable, send to domain');
+                process.domain.emit('error', err);
+                process.domain.exit();
+                return;
+            }
+        }
+    }
+
+    cb(err, result);
+}
 
 repl.start({
     prompt: "spark-node> ",
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    eval: function (code, context, filename, callback) {
+
+        // Get unique function id
+        var runFunctionId = "run_"+uniqueId();
+
+        // Wrap the code for async/await usage, in different steps:
+        // 1. Wrap the actual code to execute in an async function
+        // 2. Execute the code in the vmContext
+        // 3. Cleanup of vmContext variables
+        code = "'use strict'; async function " + runFunctionId + "() { " + code.replace(/var /g, "this.") + " }; " + runFunctionId + ".apply(this); if (this['" + runFunctionId + "']) { delete this['" + runFunctionId + "']; }; if (this['_asyncToGenerator']) { delete this['_asyncToGenerator']; };";
+
+        // Transpile the code
+        code = babel.transform(code, { "ast": false, "presets": ["stage-0"] }).code;
+
+        // Evaluate the code
+        defaultEval.call(this, code, vmContext, filename, callback);
+    }
 });
 
 

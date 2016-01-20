@@ -26,6 +26,8 @@
   },
   "homepage": "https://github.com/henridf/apache-spark-node#readme",
   "dependencies": {
+    "babel-core": "^6.4.5",
+    "babel-preset-stage-0": "^6.3.13",
     "java": "^0.6.0"
   },
   "devDependencies": {
