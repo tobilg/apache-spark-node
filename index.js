@@ -11,8 +11,7 @@ module.exports = function (args) {
     var args =
         // fake presence of a main class so that SparkSubmitArguments doesn't
         // bail. (It won't be run)
-        ["--class", "org.apache.spark.repl.Main",
-            "--name", "spark-node shell"]
+        ["--class", "org.apache.spark.repl.Main"]
             .concat(args)
             .concat(["spark-shell"]);
 
