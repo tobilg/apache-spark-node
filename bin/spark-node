@@ -8,9 +8,13 @@ var repl = require("repl");
 var vm = require('vm');
 var babel = require('babel-core');
 var crypto = require("crypto");
+var args = process.argv.slice(2);
+
+// Add application name to Spark arguments
+args = args.concat(["--name", "spark-node-shell"]);
 
 var spark_node = require("../");
-var context = spark_node(process.argv.slice(2));
+var context = spark_node(args);
 
 var vmContext = vm.createContext(context);
 
