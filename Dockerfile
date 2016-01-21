@@ -1,12 +1,18 @@
 FROM java:openjdk-8u66-jdk
 MAINTAINER tobilg <fb.tools.github@gmail.com>
 
-# packages
+# Overall ENV vars
+ENV APP_BASE_PATH /app
+ENV SPARK_VERSION 1.6.0
+ENV MESOS_BUILD_VERSION 0.25.0-0.2.70
+ENV NODE_VERSION v5.5.0
+
+# Packages
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
     echo "deb http://repos.mesosphere.io/debian jessie main" | tee /etc/apt/sources.list.d/mesosphere.list && \
     echo "deb http://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list && \
     apt-get update && \
-    apt-get install --no-install-recommends -y --force-yes mesos=0.25.0-0.2.70.debian81 \
+    apt-get install --no-install-recommends -y --force-yes mesos=$MESOS_BUILD_VERSION.debian81 \
     wget \
     python \
     make \
@@ -14,13 +20,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
     build-essential \
     g++
 
-# Overall ENV vars
-ENV APP_BASE_PATH /app
-ENV SPARK_VERSION 1.5.2
-ENV MESOS_BUILD_VERSION 0.25.0-0.2.70
-
 # Install Node.js 5.x
-ENV NODE_VERSION v5.1.0
 RUN wget --no-check-certificate https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.gz && \
     tar -C /usr/local --strip-components 1 -xzf node-$NODE_VERSION-linux-x64.tar.gz && \
     rm node-$NODE_VERSION-linux-x64.tar.gz
